@@ -1,6 +1,7 @@
 class mysql::server {
 
   if ! ($mysql_run_at_boot == true or $mysql_run_at_boot == false) { $mysql_run_at_boot = true }
+  if (!$mysql_ensure) { $mysql_ensure = 'running' }
 
   $mycnf = $operatingsystem ? {
     /RedHat|Fedora|CentOS/ => "/etc/my.cnf",
@@ -133,7 +134,7 @@ class mysql::server {
   }
 
   service { "mysql":
-    ensure      => running,
+    ensure      => $mysql_ensure,
     enable      => $mysql_run_at_boot,
     name        => $operatingsystem ? {
       /RedHat|Fedora|CentOS/ => "mysqld",
