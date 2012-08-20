@@ -18,24 +18,22 @@ class mysql::backup {
   file { "/var/backups/mysql":
     ensure  => directory,
     owner   => "root",
-    group   => "root",
+    group   => "adm",
     mode    => 750,
   }
 
-  file { "/usr/local/bin/mysql-backup.sh":
-    ensure => present,
-    source => "puppet:///modules/mysql/mysql-backup.sh",
-    owner => "root",
-    group => "root",
-    mode  => 555,
+  file {
+    "/usr/local/bin/mysql-backup.sh":
+      ensure => present,
+      source => "puppet:///modules/mysql/mysql-backup.sh",
+      owner => "root",
+      group => "root",
+      mode  => 555;
+    "/etc/cron.d/mysql_backup":
+      ensure  => present,
+      owner   => "root",
+      group   => "root",
+      mode    => 0644,
+      content => inline_template("Managed by puppet\n\n30 2 * * *	root   /usr/local/bin/mysql-backup.sh <%= mysqldump_retention %>\n");
   }
-
-  cron { "mysql-backup":
-    command => "/usr/local/bin/mysql-backup.sh ${mysqldump_retention}",
-    user    => "root",
-    hour    => 2,
-    minute  => 0,
-    require => [File["/var/backups/mysql"], File["/usr/local/bin/mysql-backup.sh"]],
-  }
-
 }
