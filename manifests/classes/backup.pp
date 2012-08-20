@@ -8,7 +8,7 @@ mysqldump --all-databases. Backups will be stored in /var/backups/mysql.
 
 Attributes:
 - $mysqldump_retention: defines if backup rotate on a weekly, monthly or yearly
-  basis. Accepted values: "week", "month", "year". Defaults to "week".
+  basis. Accepted values: "day", "week", "month", "year". Defaults to "day".
 
 */
 class mysql::backup {

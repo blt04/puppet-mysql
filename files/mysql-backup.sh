@@ -1,33 +1,37 @@
 #!/bin/sh
 # file managed by puppet
 
+PATH="/bin:/sbin:/usr/bin:/usr/sbin"
+MYDIR="/var/lib/mysql"
+BKPDIR="/var/backups/mysql"
+BKPFILE="all-databases"
+DUMPARGS="--all-databases --add-drop-database --single-transaction --flush-logs --master-data=2"
+
 case "$1" in
+  day)
+    ;;
   week)
-    DAY=$(date +%A |tr 'A-Z' 'a-z')
+    BKPFILE="$BKPFILE-$(date +%A |tr 'A-Z' 'a-z')"
     ;;
   month)
-    DAY=$(date +%d)
+    BKPFILE="$BKPFILE-$(date +%d)"
     ;;
   year)
-    DAY=$(date +%j)
+    BKPFILE="$BKPFILE-$(date +%j)"
     ;;
   *)
-    echo "Usage: $0 (week|month|year)"
+    echo "Usage: $0 (day|week|month|year)"
     exit 1
     ;;
 esac
 
-PATH="/bin:/sbin:/usr/bin:/usr/sbin"
-MYDIR="/var/lib/mysql"
-BKPDIR="/var/backups/mysql"
-
 # Installed ?
 if [ -e /usr/bin/mysqladmin ] && [ -e /usr/bin/mysqldump ]; then
   # used ?
-  if [ -d /var/lib/mysql ] && [ -n "$(find /var/lib/mysql -maxdepth 1 -type d ! -iname mysql ! -iname test )" ]; then
+  if [ -d $MYDIR ] && [ -n "$(find $MYDIR -maxdepth 1 -type d ! -iname mysql ! -iname test )" ]; then
     # Running ?
     if /usr/bin/mysqladmin -s ping > /dev/null; then
-      /usr/bin/mysqldump --all-database --extended-insert > $BKPDIR/mysql.sql && nice -n 19 gzip -9 $BKPDIR/mysql.sql && mv -f $BKPDIR/mysql.sql.gz $BKPDIR/mysql-$DAY.sql.gz
+      /usr/bin/mysqldump $DUMPARGS > $BKPDIR/tmp.sql && nice -n 19 gzip -9 $BKPDIR/tmp.sql && mv -f $BKPDIR/tmp.sql.gz $BKPDIR/$BKPFILE.sql.gz
       exit $?
     else
       echo 'mysqld not running'
