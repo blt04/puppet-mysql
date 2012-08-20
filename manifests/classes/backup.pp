@@ -29,6 +29,12 @@ class mysql::backup {
       owner => "root",
       group => "root",
       mode  => 555;
+    "/usr/local/bin/mysql-backup-binlogs.sh":
+      ensure => present,
+      source => "puppet:///modules/mysql/mysql-backup-binlogs.sh",
+      owner => "root",
+      group => "root",
+      mode  => 555;
     "/etc/cron.d/mysql_backup":
       ensure  => present,
       owner   => "root",
