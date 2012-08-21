@@ -1,6 +1,7 @@
 #!/bin/sh
 # file managed by puppet
 
+umask 0037
 PATH="/bin:/sbin:/usr/bin:/usr/sbin"
 FULL_HOUR="${1:-*}"
 MYDIR="/var/lib/mysql"
