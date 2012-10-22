@@ -8,11 +8,18 @@ Puppet::Type.type(:mysql_user).provide(:mysql,
 	commands :mysql => '/usr/bin/mysql'
 	commands :mysqladmin => '/usr/bin/mysqladmin'
 
+	def self.mysql_opts
+		'--defaults-extra-file=/root/.my.cnf'
+	end
+	def mysql_opts
+		self.class.mysql_opts
+	end
+
 	# retrieve the current set of mysql users
 	def self.instances
 		users = []
 
-		cmd = "#{command(:mysql)} mysql -NBe 'select concat(user, \"@\", host), password from user'"
+		cmd = "#{command(:mysql)} #{mysql_opts} mysql -NBe 'select concat(user, \"@\", host), password from user'"
 		execpipe(cmd) do |process|
 			process.each do |line|
 				users << new( query_line_to_hash(line) )
@@ -31,13 +38,13 @@ Puppet::Type.type(:mysql_user).provide(:mysql,
 	end
 
 	def mysql_flush 
-		mysqladmin "flush-privileges"
+		mysqladmin mysql_opts, "flush-privileges"
 	end
 
 	def query
 		result = {}
 
-		cmd = "#{command(:mysql)} -NBe 'select concat(user, \"@\", host), password from user where concat(user, \"@\", host) = \"%s\"'" % @resource[:name]
+		cmd = "#{command(:mysql)} #{mysql_opts} -NBe 'select concat(user, \"@\", host), password from user where concat(user, \"@\", host) = \"%s\"'" % @resource[:name]
 		execpipe(cmd) do |process|
 			process.each do |line|
 				unless result.empty?
@@ -51,17 +58,17 @@ Puppet::Type.type(:mysql_user).provide(:mysql,
 	end
 
 	def create
-		mysql "mysql", "-e", "create user '%s' identified by PASSWORD '%s'" % [ @resource[:name].sub("@", "'@'"), @resource.should(:initial_password_hash) || @resource.should(:password_hash) ]
+		mysql mysql_opts, "mysql", "-e", "create user '%s' identified by PASSWORD '%s'" % [ @resource[:name].sub("@", "'@'"), @resource.should(:initial_password_hash) || @resource.should(:password_hash) ]
 		mysql_flush
 	end
 
 	def destroy
-		mysql "mysql", "-e", "drop user '%s'" % @resource[:name].sub("@", "'@'")
+		mysql mysql_opts, "mysql", "-e", "drop user '%s'" % @resource[:name].sub("@", "'@'")
 		mysql_flush
 	end
 
 	def exists?
-		not mysql("mysql", "-NBe", "select '1' from user where CONCAT(user, '@', host) = '%s'" % @resource[:name]).empty?
+		not mysql(mysql_opts, "mysql", "-NBe", "select '1' from user where CONCAT(user, '@', host) = '%s'" % @resource[:name]).empty?
 	end
 
 	def password_hash
@@ -69,7 +76,7 @@ Puppet::Type.type(:mysql_user).provide(:mysql,
     end
 
 	def password_hash=(string)
-		mysql "mysql", "-e", "SET PASSWORD FOR '%s' = '%s'" % [ @resource[:name].sub("@", "'@'"), string ]
+		mysql mysql_opts, "mysql", "-e", "SET PASSWORD FOR '%s' = '%s'" % [ @resource[:name].sub("@", "'@'"), string ]
 		mysql_flush
 	end
 
